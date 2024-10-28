@@ -31,6 +31,8 @@ const admin = require("firebase-admin");
 const cors = require("cors");
 const https = require("https");
 const handler = cors({ origin: true });
+const { defineSecret } = require("firebase-functions/params");
+const captchaKey = defineSecret("CAPTCHA_KEY");
 
 const serviceAccount = require("./appointapp3-firebase-adminsdk-gc9p3-38e4f4af6c.json");
 const { request } = require("http");
@@ -63,10 +65,13 @@ exports.userClaims = functions.https.onRequest(async (request, response) => {
   response.send(authUser);
 });
 
-exports.testEnv = functions.https.onRequest(async (request, response) => {
-  const value = `el valor de la env variable es ${process.env.SECRET}`;
-  response.send(value);
-});
+exports.testEnv = functions
+  .runWith({ secrets: [captchaKey] })
+  .https.onRequest(async (request, response) => {
+    //const value = `el valor de la env variable es ${process.env.SECRET}`;
+    const value = `el valor de la secret variable es ${captchaKey.value()}`;
+    response.send(value);
+  });
 
 exports.verifyToken = functions.https.onRequest((request, response) => {
   cors()(request, response, async () => {
